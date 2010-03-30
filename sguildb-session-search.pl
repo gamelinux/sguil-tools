@@ -93,7 +93,7 @@ sub tftoa {
 }
 
 our $QUERY = q();
-$QUERY = qq[SELECT sancp.sancpid,INET_NTOA(sancp.src_ip),sancp.src_port,INET_NTOA(sancp.dst_ip),sancp.dst_port,sancp.ip_proto,src_flags,dst_flags FROM sancp IGNORE INDEX (p_key) WHERE ];
+$QUERY = qq[SELECT sancp.start_time,INET_NTOA(sancp.src_ip),sancp.src_port,INET_NTOA(sancp.dst_ip),sancp.dst_port,sancp.ip_proto,src_flags,dst_flags FROM sancp IGNORE INDEX (p_key) WHERE ];
 
 if (defined $FROM_DATE && $FROM_DATE =~ /^\d\d\d\d\-\d\d\-\d\d$/) {
     print "Searching from date: $FROM_DATE 00:00:01\n" if $DEBUG;
@@ -135,10 +135,10 @@ if (defined $PROTO && $PROTO =~ /^([\d]){1,3}$/) {
 
 if (defined $LIMIT && $LIMIT =~ /^([\d])+$/) {
     print "Limit: $LIMIT\n" if $DEBUG;
-    $QUERY = $QUERY . qq[ORDER BY src_ip LIMIT $LIMIT ];
+    $QUERY = $QUERY . qq[ORDER BY sancp.start_time LIMIT $LIMIT ];
 } else {
     print "Limit: $DLIMIT\n" if $DEBUG;
-    $QUERY = $QUERY . qq[ORDER BY src_ip LIMIT $DLIMIT ];
+    $QUERY = $QUERY . qq[ORDER BY sancp.start_time LIMIT $DLIMIT ];
 }
 
 print "\nmysql> $QUERY;\n\n" if $DEBUG;
@@ -146,7 +146,7 @@ print "\nmysql> $QUERY;\n\n" if $DEBUG;
 my $pri = $dbh->prepare( qq{ $QUERY } ); 
 $pri->execute();
 
-while (my ($sancpid,$src_ip,$src_port,$dst_ip,$dst_port,$proto,$src_flags,$dst_flags) = $pri->fetchrow_array()) {
+while (my ($starttime,$src_ip,$src_port,$dst_ip,$dst_port,$proto,$src_flags,$dst_flags) = $pri->fetchrow_array()) {
     next if not defined $src_ip or not defined $dst_ip;
     my $SFlags = tftoa($src_flags);
     my $DFlags = tftoa($dst_flags);
