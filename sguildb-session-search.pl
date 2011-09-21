@@ -31,8 +31,8 @@ $ sguil-sessions.pl [options]
     --dst_ip      : Destination IP
     --dst_port    : Destination Port
     --proto       : Protocol
-    --from-date   : Date to search from in iso format (2010-01-01 etc.)
-    --to-date     : Date to search to in iso format (2020-01-01 etc.)
+    --from-date   : Date to search from in iso format (2010-01-01 [04:32:01])
+    --to-date     : Date to search to in iso format (2020-01-01 [23:59:59)
     --limit       : Limit on search results
 
 =cut
@@ -95,17 +95,27 @@ sub tftoa {
 our $QUERY = q();
 $QUERY = qq[SELECT sancp.start_time,INET_NTOA(sancp.src_ip),sancp.src_port,INET_NTOA(sancp.dst_ip),sancp.dst_port,sancp.ip_proto,src_flags,dst_flags FROM sancp IGNORE INDEX (p_key) WHERE ];
 
-if (defined $FROM_DATE && $FROM_DATE =~ /^\d\d\d\d\-\d\d\-\d\d$/) {
-    print "Searching from date: $FROM_DATE 00:00:01\n" if $DEBUG;
-    $QUERY = $QUERY . qq[sancp.start_time > '$FROM_DATE 00:00:01' ];
+if (defined $FROM_DATE) {
+    if ($FROM_DATE =~ /^\d\d\d\d\-\d\d\-\d\d \d\d:\d\d:\d\d$/) {
+        print "Searching from date: $FROM_DATE\n" if $DEBUG;
+        $QUERY = $QUERY . qq[sancp.start_time > '$FROM_DATE' ];
+    } elsif ($FROM_DATE =~ /^\d\d\d\d\-\d\d\-\d\d$/) {
+        print "Searching from date: $FROM_DATE 00:00:01\n" if $DEBUG;
+        $QUERY = $QUERY . qq[sancp.start_time > '$FROM_DATE 00:00:01' ];
+    }
 } else {
     print "Searching from date: $yesterday\n" if $DEBUG;
     $QUERY = $QUERY . qq[sancp.start_time > '$yesterday' ];
 }
 
-if (defined $TO_DATE && $TO_DATE =~ /^\d\d\d\d\-\d\d\-\d\d$/) {
-    print "Searching to date: $TO_DATE 23:59:59\n" if $DEBUG;
-    $QUERY = $QUERY . qq[AND sancp.end_time < '$TO_DATE 23:59:59' ];
+if (defined $TO_DATE) {
+    if ($TO_DATE =~ /^\d\d\d\d\-\d\d\-\d\d \d\d:\d\d:\d\d$/) {
+        print "Searching to date: $TO_DATE\n" if $DEBUG;
+        $QUERY = $QUERY . qq[AND sancp.end_time < '$TO_DATE' ];
+    } elsif ($TO_DATE =~ /^\d\d\d\d\-\d\d\-\d\d$/ ) {
+        print "Searching to date: $TO_DATE 23:59:59\n" if $DEBUG;
+        $QUERY = $QUERY . qq[AND sancp.end_time < '$TO_DATE 23:59:59' ];
+    }
 }
 
 if (defined $SRC_IP && $SRC_IP =~ /^([\d]{1,3}\.){3}[\d]{1,3}$/) {
