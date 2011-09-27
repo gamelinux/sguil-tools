@@ -26,6 +26,7 @@ $ sguil-sessions.pl [options]
 
   OPTIONS:
 
+    --ip          : IP (Source/Destination)
     --src_ip      : Source IP
     --src_port    : Source Port
     --dst_ip      : Destination IP
@@ -38,6 +39,8 @@ $ sguil-sessions.pl [options]
 =cut
 
 our $DEBUG         = 0;
+our $IP;
+our $PORT;
 our $SRC_IP;
 our $SRC_PORT;
 our $DST_IP;
@@ -48,6 +51,8 @@ our $TO_DATE;
 our $LIMIT;
 
 GetOptions(
+    'ip=s'          => \$IP,
+    'port=s'        => \$PORT,
     'src_ip=s'      => \$SRC_IP,
     'src_port=s'    => \$SRC_PORT,
     'dst_ip=s'      => \$DST_IP,
@@ -60,7 +65,8 @@ GetOptions(
 
 
 my $dsn = 'DBI:mysql:sguildb:'.$db_host;
-my $dbh = DBI->connect($dsn, $db_user_name, $db_password);
+#my $dbh = DBI->connect($dsn, $db_user_name, $db_password);
+my $dbh = 1;
 my $today = today();
 my $weekago = $today - 7;
 my $yesterday = $today->prev;
@@ -118,22 +124,32 @@ if (defined $TO_DATE) {
     }
 }
 
-if (defined $SRC_IP && $SRC_IP =~ /^([\d]{1,3}\.){3}[\d]{1,3}$/) {
+if (defined $IP && $IP =~ /^([\d]{1,3}\.){3}[\d]{1,3}$/) {
+    print "IP is: $IP\n" if $DEBUG;
+    $QUERY = $QUERY . qq[AND (INET_NTOA(sancp.src_ip)='$IP' or INET_NTOA(sancp.dst_ip)='$IP') ];
+}
+
+if (!defined $IP && defined $SRC_IP && $SRC_IP =~ /^([\d]{1,3}\.){3}[\d]{1,3}$/) {
     print "Source IP is: $SRC_IP\n" if $DEBUG;
     $QUERY = $QUERY . qq[AND INET_NTOA(sancp.src_ip)='$SRC_IP' ];
 }
 
-if (defined $SRC_PORT && $SRC_PORT =~ /^([\d]){1,5}$/) {
+if (defined $PORT && $PORT =~ /^([\d]){1,5}$/) {
+    print "Port is: $PORT\n" if $DEBUG;
+    $QUERY = $QUERY . qq[AND (sancp.src_port='$PORT' or sancp.dst_port='$PORT') ];
+}
+
+if (!defined $PORT && defined $SRC_PORT && $SRC_PORT =~ /^([\d]){1,5}$/) {
     print "Source Port is: $SRC_PORT\n" if $DEBUG;
     $QUERY = $QUERY . qq[AND sancp.src_port='$SRC_PORT' ];
 }
 
-if (defined $DST_IP && $DST_IP =~ /^([\d]{1,3}\.){3}[\d]{1,3}$/) {
+if (!defined $IP && defined $DST_IP && $DST_IP =~ /^([\d]{1,3}\.){3}[\d]{1,3}$/) {
     print "Destination IP is: $DST_IP\n" if $DEBUG;
     $QUERY = $QUERY . qq[AND INET_NTOA(sancp.dst_ip)='$DST_IP' ];
 }
 
-if (defined $DST_PORT && $DST_PORT =~ /^([\d]){1,5}$/) {
+if (!defined $PORT && defined $DST_PORT && $DST_PORT =~ /^([\d]){1,5}$/) {
     print "Destination Port is: $DST_PORT\n" if $DEBUG;
     $QUERY = $QUERY . qq[AND sancp.dst_port='$DST_PORT' ];
 }
