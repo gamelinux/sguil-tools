@@ -18,7 +18,7 @@ my $DLIMIT        = 100;
 
 =head1 VERSION
 
-    0.1
+    0.2
 
 =head1 SYNOPSIS
 
@@ -65,8 +65,7 @@ GetOptions(
 
 
 my $dsn = 'DBI:mysql:sguildb:'.$db_host;
-#my $dbh = DBI->connect($dsn, $db_user_name, $db_password);
-my $dbh = 1;
+my $dbh = DBI->connect($dsn, $db_user_name, $db_password);
 my $today = today();
 my $weekago = $today - 7;
 my $yesterday = $today->prev;
@@ -126,12 +125,12 @@ if (defined $TO_DATE) {
 
 if (defined $IP && $IP =~ /^([\d]{1,3}\.){3}[\d]{1,3}$/) {
     print "IP is: $IP\n" if $DEBUG;
-    $QUERY = $QUERY . qq[AND (INET_NTOA(sancp.src_ip)='$IP' or INET_NTOA(sancp.dst_ip)='$IP') ];
+    $QUERY = $QUERY . qq[AND (sancp.src_ip=INET_ATON("$IP") OR sancp.dst_ip=INET_ATON("$IP")) ];
 }
 
 if (!defined $IP && defined $SRC_IP && $SRC_IP =~ /^([\d]{1,3}\.){3}[\d]{1,3}$/) {
     print "Source IP is: $SRC_IP\n" if $DEBUG;
-    $QUERY = $QUERY . qq[AND INET_NTOA(sancp.src_ip)='$SRC_IP' ];
+    $QUERY = $QUERY . qq[AND sancp.src_ip=INET_ATON("$SRC_IP") ];
 }
 
 if (defined $PORT && $PORT =~ /^([\d]){1,5}$/) {
@@ -146,7 +145,7 @@ if (!defined $PORT && defined $SRC_PORT && $SRC_PORT =~ /^([\d]){1,5}$/) {
 
 if (!defined $IP && defined $DST_IP && $DST_IP =~ /^([\d]{1,3}\.){3}[\d]{1,3}$/) {
     print "Destination IP is: $DST_IP\n" if $DEBUG;
-    $QUERY = $QUERY . qq[AND INET_NTOA(sancp.dst_ip)='$DST_IP' ];
+    $QUERY = $QUERY . qq[AND sancp.dst_ip=INET_ATON("$DST_IP") ];
 }
 
 if (!defined $PORT && defined $DST_PORT && $DST_PORT =~ /^([\d]){1,5}$/) {
@@ -188,7 +187,7 @@ $dbh->disconnect();
 
 =head1 COPYRIGHT
 
-    Copyright (C) 2010, Edward Fjellskaal (edwardfjellskaal@gmail.com)
+    Copyright (C) 2010-2015, Edward Fjellskaal (edwardfjellskaal@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -205,4 +204,3 @@ $dbh->disconnect();
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 =cut
-
